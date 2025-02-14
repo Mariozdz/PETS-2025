@@ -1,7 +1,7 @@
 import os
 import requests
-from cryptography.hazmat.primitives.asymmetric import rsa, padding
-from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives.asymmetric import rsa, padding as async_padding
+from cryptography.hazmat.primitives import serialization, hashes, padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 # Cargar una clave pública desde un archivo PEM
@@ -31,8 +31,8 @@ def cifrado_aes(message, key):
 def cifrado_rsa(public_key, data):
     return public_key.encrypt(
         data,
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA1()),
+        async_padding.OAEP(
+            mgf=async_padding.MGF1(algorithm=hashes.SHA1()),
             algorithm=hashes.SHA1(),
             label=None
         )
@@ -52,7 +52,7 @@ mix2 = load_public_key("public-key-mix-2.pem")
 mix3 = load_public_key("public-key-mix-3.pem")
 
 # Mensaje
-recipient = "estudiante6"
+recipient = "Alice"
 message = "Hola"
 message = f"{recipient},{message}".encode()
 
@@ -71,7 +71,7 @@ key1 = os.urandom(16)
 iv1, cifrado_3 = cifrado_aes(E2, key1)
 E3 = cifrado_rsa(mix1, iv1 + key1) + cifrado_3
 
-# Agregar la longitud del mensaje (4 bytes, big-endian)**
+# Agregar la longitud del mensaje (4 bytes, big-endian)
 message_length = len(E3).to_bytes(4, "big")
 network_message = message_length + E3
 
