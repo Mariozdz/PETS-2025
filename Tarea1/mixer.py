@@ -76,6 +76,6 @@ message_length = len(E3).to_bytes(4, "big")
 network_message = message_length + E3
 
 # Enviar al primer MIX
-URL = "https://pets.ic-itcr.ac.cr"
+URL = ""
 PORT = 50074
 enviar_mensaje(URL, PORT, E3)
