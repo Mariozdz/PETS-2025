@@ -1,11 +1,6 @@
 import os
-import subprocess
-import requests
-
 import socket
-
-import pycurl
-from io import BytesIO
+import time
 
 from cryptography.hazmat.primitives.asymmetric import rsa, padding as async_padding
 from cryptography.hazmat.primitives import serialization, hashes, padding
@@ -70,46 +65,36 @@ mix1 = load_public_key("public-key-mix-1.pem")
 mix2 = load_public_key("public-key-mix-2.pem")
 mix3 = load_public_key("public-key-mix-3.pem")
 
-# Mensaje
-recipient = "estudiante6"
-message = "Hola"
-message = f"{recipient},{message}".encode()
+for i in range(6):
+    # Mensaje
+    recipient = "estudiante6"
+    message = "Hola"
+    message = f"{recipient},{message}".encode()
 
-# Primer cifrado (Mix 3)
-key3 = os.urandom(16) # Llave Random
-iv3, cifrado_1 = cifrado_aes(message, key3)
-E1 = cifrado_rsa(mix3, iv3 + key3) + cifrado_1
+    # Primer cifrado (Mix 3)
+    key3 = os.urandom(16) # Llave Random
+    iv3, cifrado_1 = cifrado_aes(message, key3)
+    E1 = cifrado_rsa(mix3, iv3 + key3) + cifrado_1
 
-print(f"E1 len: {len(E1)} bytes")
+    # Segunda cifrado (Mix 2)
+    key2 = os.urandom(16)
+    iv2, cifrado_2 = cifrado_aes(E1, key2)
+    E2 = cifrado_rsa(mix2, iv2 + key2) + cifrado_2
 
-# Segunda cifrado (Mix 2)
-key2 = os.urandom(16)
-iv2, cifrado_2 = cifrado_aes(E1, key2)
-E2 = cifrado_rsa(mix2, iv2 + key2) + cifrado_2
+    # Tercer cifrado (Mix 1)
+    key1 = os.urandom(16)
+    iv1, cifrado_3 = cifrado_aes(E2, key1)
+    E3 = cifrado_rsa(mix1, iv1 + key1) + cifrado_3
 
-print(f"E2 len: {len(E2)} bytes")
+    # Calcular y verificar el tamaño
+    actual_length = len(E3)
+    message_length = actual_length.to_bytes(4, byteorder='big', signed=False)
 
-# Tercer cifrado (Mix 1)
-key1 = os.urandom(16)
-iv1, cifrado_3 = cifrado_aes(E2, key1)
-E3 = cifrado_rsa(mix1, iv1 + key1) + cifrado_3
+    # Construir mensaje final
+    network_message = message_length + E3
 
-print(f"E3 len: {len(E3)} bytes")
-
-# Calcular y verificar el tamaño
-actual_length = len(E3)
-message_length = actual_length.to_bytes(4, byteorder='big', signed=False)
-
-# Verificaciones
-print(f"Tamaño real del mensaje: {actual_length} bytes")
-
-# Construir mensaje final
-network_message = message_length + E3
-
-# Verificación adicional del mensaje completo
-print(f"Tamaño total del mensaje: {len(network_message)} bytes")
-
-# Enviar al primer MIX
-URL = "" #45.79.220.30 - https://pets.ic-itcr.ac.cr
-PORT = 
-enviar_mensaje(URL, PORT, network_message)
+    # Enviar al primer MIX
+    URL = ""
+    PORT = 50018
+    enviar_mensaje(URL, PORT, network_message)
+    #time.sleep(1)
